@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Pengambilan MBG</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-dark bg-success shadow-sm mb-4">
+        <div class="container">
+            <span class="navbar-brand mb-0 h1">LAPORAN MBG</span>
+            <a href="index.html" class="btn btn-light btn-sm">Kembali</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-3">No</th>
+                                <th>Warga</th>
+                                <th>Waktu Pengambilan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="laporan-list">
+                            <!-- Data akan diisi oleh JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function loadLaporan() {
+            const warga = JSON.parse(localStorage.getItem('warga')) || [];
+            const pengambilan = JSON.parse(localStorage.getItem('pengambilan')) || [];
+            const list = document.getElementById('laporan-list');
+            list.innerHTML = '';
+
+            // Gabungkan data pengambilan dengan nama warga
+            const dataFull = pengambilan.map(p => {
+                const w = warga.find(w => w.id === p.warga_id) || { nama: 'Warga Terhapus', nik: '-', kategori: '-' };
+                return { ...p, ...w };
+            });
+
+            // Urutkan berdasarkan waktu terbaru
+            dataFull.sort((a, b) => new Date(b.waktu_ambil) - new Date(a.waktu_ambil));
+
+            dataFull.forEach((item, index) => {
+                const dateObj = new Date(item.waktu_ambil);
+                const tgl = dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+                const jam = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="ps-3 text-muted">${index + 1}</td>
+                    <td>
+                        <div class="fw-bold">${item.nama}</div>
+                        <span class="badge bg-info text-dark" style="font-size: 0.7rem;">${item.kategori}</span>
+                        <small class="d-block text-muted">${item.nik}</small>
+                    </td>
+                    <td>
+                        <div class="fw-bold text-success">${tgl}</div>
+                        <small class="text-muted">${jam} WIB</small>
+                    </td>
+                `;
+                list.appendChild(tr);
+            });
+
+            if (dataFull.length === 0) {
+                list.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-muted">Belum ada data pengambilan.</td></tr>';
+            }
+        }
+
+        loadLaporan();
+    </script>
+</body>
+</html>
