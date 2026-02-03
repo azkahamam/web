@@ -17,31 +17,14 @@
         </div>
     </nav>
 
-    <div class="container">
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-white py-3">
-                <h5 class="mb-0 text-primary fw-bold text-center" id="current-date">
-                    Absensi: ...
-                </h5>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0" id="table-absensi">
-                        <thead class="table-light">
-                            <tr>
-                                <th class="ps-3">No</th>
-                                <th>Nama & NIK</th>
-                                <th class="text-center">Status</th>
-                                <th class="text-center pe-3">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="warga-list">
-                            <!-- Data akan diisi oleh JS -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+    <div class="container mb-3">
+        <h5 class="mb-0 text-primary fw-bold text-center" id="current-date">
+            Absensi: ...
+        </h5>
+    </div>
+
+    <div class="container" id="category-containers">
+        <!-- Tabel per kategori akan diisi oleh JS -->
     </div>
 
     <script>
@@ -52,39 +35,68 @@
         function loadData() {
             const warga = JSON.parse(localStorage.getItem('warga')) || [];
             const pengambilan = JSON.parse(localStorage.getItem('pengambilan')) || [];
-            const list = document.getElementById('warga-list');
-            list.innerHTML = '';
+            const container = document.getElementById('category-containers');
+            container.innerHTML = '';
 
-            warga.sort((a, b) => a.nama.localeCompare(b.nama));
+            const categories = ['Ibu Hamil', 'Busui', 'Balita'];
 
-            warga.forEach((w, index) => {
-                const sudahAmbil = pengambilan.some(p => p.warga_id === w.id && p.tanggal === today);
-                
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="ps-3 text-muted">${index + 1}</td>
-                    <td>
-                        <div class="fw-bold">${w.nama}</div>
-                        <div class="badge bg-info text-dark" style="font-size: 0.7rem;">${w.kategori}</div>
-                        <small class="d-block text-muted">${w.nik} | RT ${w.rt}/${w.rw}</small>
-                    </td>
-                    <td class="text-center">
-                        <span class="badge rounded-pill ${sudahAmbil ? 'bg-success' : 'bg-warning text-dark'}">
-                            ${sudahAmbil ? 'Sudah' : 'Belum'}
-                        </span>
-                    </td>
-                    <td class="text-center pe-3">
-                        <div class="d-flex justify-content-center gap-1">
-                            ${!sudahAmbil ? `<button onclick="ambilMBG(${w.id})" class="btn btn-primary btn-sm px-3">Ambil</button>` : ''}
-                            <button onclick="hapusWarga(${w.id})" class="btn btn-outline-danger btn-sm px-2">&times;</button>
+            categories.forEach(cat => {
+                const filteredWarga = warga.filter(w => w.kategori === cat);
+                filteredWarga.sort((a, b) => a.nama.localeCompare(b.nama));
+
+                if (filteredWarga.length > 0) {
+                    const card = document.createElement('div');
+                    card.className = 'card shadow-sm border-0 mb-4';
+                    card.innerHTML = `
+                        <div class="card-header bg-white py-2">
+                            <h6 class="mb-0 fw-bold text-primary text-uppercase small">${cat}</h6>
                         </div>
-                    </td>
-                `;
-                list.appendChild(tr);
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr style="font-size: 0.8rem;">
+                                            <th class="ps-3">No</th>
+                                            <th>Nama & NIK</th>
+                                            <th class="text-center">Status</th>
+                                            <th class="text-center pe-3">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${filteredWarga.map((w, index) => {
+                                            const sudahAmbil = pengambilan.some(p => p.warga_id === w.id && p.tanggal === today);
+                                            return `
+                                                <tr>
+                                                    <td class="ps-3 text-muted small">${index + 1}</td>
+                                                    <td>
+                                                        <div class="fw-bold small">${w.nama}</div>
+                                                        <small class="text-muted" style="font-size: 0.7rem;">${w.nik} | RT ${w.rt}/${w.rw}</small>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <span class="badge rounded-pill ${sudahAmbil ? 'bg-success' : 'bg-warning text-dark'}" style="font-size: 0.65rem;">
+                                                            ${sudahAmbil ? 'Sudah' : 'Belum'}
+                                                        </span>
+                                                    </td>
+                                                    <td class="text-center pe-3">
+                                                        <div class="d-flex justify-content-center gap-1">
+                                                            ${!sudahAmbil ? `<button onclick="ambilMBG(${w.id})" class="btn btn-primary btn-sm px-2 py-0 small" style="font-size: 0.7rem;">Ambil</button>` : ''}
+                                                            <button onclick="hapusWarga(${w.id})" class="btn btn-outline-danger btn-sm px-1 py-0 small" style="font-size: 0.7rem;">&times;</button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            `;
+                                        }).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                }
             });
 
             if (warga.length === 0) {
-                list.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted">Belum ada data warga.</td></tr>';
+                container.innerHTML = '<div class="text-center py-5 text-muted">Belum ada data warga.</div>';
             }
         }
 
