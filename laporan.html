@@ -14,66 +14,77 @@
         </div>
     </nav>
 
-    <div class="container">
-        <div class="card shadow-sm border-0">
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th class="ps-3">No</th>
-                                <th>Warga</th>
-                                <th>Waktu Pengambilan</th>
-                            </tr>
-                        </thead>
-                        <tbody id="laporan-list">
-                            <!-- Data akan diisi oleh JS -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+    <div class="container" id="laporan-container">
+        <!-- Tabel laporan per kategori akan diisi oleh JS -->
     </div>
 
     <script>
         function loadLaporan() {
             const warga = JSON.parse(localStorage.getItem('warga')) || [];
             const pengambilan = JSON.parse(localStorage.getItem('pengambilan')) || [];
-            const list = document.getElementById('laporan-list');
-            list.innerHTML = '';
+            const container = document.getElementById('laporan-container');
+            container.innerHTML = '';
+
+            const categories = ['Ibu Hamil', 'Busui', 'Balita'];
 
             // Gabungkan data pengambilan dengan nama warga
             const dataFull = pengambilan.map(p => {
-                const w = warga.find(w => w.id === p.warga_id) || { nama: 'Warga Terhapus', nik: '-', kategori: '-' };
+                const w = warga.find(w => w.id === p.warga_id) || { nama: 'Warga Terhapus', nik: '-', kategori: 'Lainnya' };
                 return { ...p, ...w };
             });
 
-            // Urutkan berdasarkan waktu terbaru
-            dataFull.sort((a, b) => new Date(b.waktu_ambil) - new Date(a.waktu_ambil));
+            categories.forEach(cat => {
+                const filteredData = dataFull.filter(item => item.kategori === cat);
+                // Urutkan berdasarkan waktu terbaru
+                filteredData.sort((a, b) => new Date(b.waktu_ambil) - new Date(a.waktu_ambil));
 
-            dataFull.forEach((item, index) => {
-                const dateObj = new Date(item.waktu_ambil);
-                const tgl = dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-                const jam = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="ps-3 text-muted">${index + 1}</td>
-                    <td>
-                        <div class="fw-bold">${item.nama}</div>
-                        <span class="badge bg-info text-dark" style="font-size: 0.7rem;">${item.kategori}</span>
-                        <small class="d-block text-muted">${item.nik}</small>
-                    </td>
-                    <td>
-                        <div class="fw-bold text-success">${tgl}</div>
-                        <small class="text-muted">${jam} WIB</small>
-                    </td>
-                `;
-                list.appendChild(tr);
+                if (filteredData.length > 0) {
+                    const card = document.createElement('div');
+                    card.className = 'card shadow-sm border-0 mb-4';
+                    card.innerHTML = `
+                        <div class="card-header bg-white py-2">
+                            <h6 class="mb-0 fw-bold text-success text-uppercase small">${cat}</h6>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr style="font-size: 0.8rem;">
+                                            <th class="ps-3">No</th>
+                                            <th>Warga</th>
+                                            <th>Waktu Pengambilan</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${filteredData.map((item, index) => {
+                                            const dateObj = new Date(item.waktu_ambil);
+                                            const tgl = dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+                                            const jam = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                                            return `
+                                                <tr>
+                                                    <td class="ps-3 text-muted small">${index + 1}</td>
+                                                    <td>
+                                                        <div class="fw-bold small">${item.nama}</div>
+                                                        <small class="text-muted" style="font-size: 0.7rem;">${item.nik}</small>
+                                                    </td>
+                                                    <td>
+                                                        <div class="fw-bold text-success small">${tgl}</div>
+                                                        <small class="text-muted" style="font-size: 0.7rem;">${jam} WIB</small>
+                                                    </td>
+                                                </tr>
+                                            `;
+                                        }).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                }
             });
 
             if (dataFull.length === 0) {
-                list.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-muted">Belum ada data pengambilan.</td></tr>';
+                container.innerHTML = '<div class="text-center py-5 text-muted">Belum ada data pengambilan.</div>';
             }
         }
 
