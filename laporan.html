@@ -19,6 +19,15 @@
     </div>
 
     <script>
+        // Reset data pengambilan jika ganti hari (otomatis reset laporan)
+        const now = new Date();
+        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const lastDate = localStorage.getItem('last_date');
+        if (lastDate !== today) {
+            localStorage.setItem('pengambilan', JSON.stringify([]));
+            localStorage.setItem('last_date', today);
+        }
+
         function loadLaporan() {
             const warga = JSON.parse(localStorage.getItem('warga')) || [];
             const pengambilan = JSON.parse(localStorage.getItem('pengambilan')) || [];
