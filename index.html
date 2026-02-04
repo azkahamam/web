@@ -28,9 +28,22 @@
     </div>
 
     <script>
-        const today = new Date().toISOString().split('T')[0];
-        const formattedDate = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+        // Ambil tanggal lokal hari ini (YYYY-MM-DD)
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const today = `${year}-${month}-${day}`;
+
+        const formattedDate = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
         document.getElementById('current-date').innerText = 'Absensi: ' + formattedDate;
+
+        // Reset data pengambilan jika ganti hari (otomatis reset status & laporan)
+        const lastDate = localStorage.getItem('last_date');
+        if (lastDate !== today) {
+            localStorage.setItem('pengambilan', JSON.stringify([]));
+            localStorage.setItem('last_date', today);
+        }
 
         function loadData() {
             const warga = JSON.parse(localStorage.getItem('warga')) || [];
